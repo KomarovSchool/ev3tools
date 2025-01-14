@@ -27,3 +27,9 @@ class RemoteMotor:
         Stop the motor
         """
         return self._client.call(self._port_str, method_name='stop', args=[], kwargs={})
+    
+    def dc(self, power):
+        """
+        Stop the motor
+        """
+        return self._client.call(self._port_str, method_name='dc', args=[power], kwargs={})

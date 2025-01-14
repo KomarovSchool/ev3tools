@@ -13,14 +13,14 @@ def port2str(port: Port) -> str:
     elif port in [Port.S1, Port.S2, Port.S3, Port.S4]:
         return port.name  # e.g. Port.S1 -> "S1"
     else:
-        raise ValueError(f"Unsupported port: {port}")
+        raise ValueError("Unsupported port: {}".format(port))
 
 def str2port(port_str: str) -> Port:
     """
     Convert "A", "B", "C", "D", "S1", "S2", etc. back to Pybricks Port enums.
     """
     # This is a naive example; adapt logic if necessary
-    return Port[port_str]  # e.g. "A" -> Port.A, "S1" -> Port.S1
+    return getattr(Port, port_str)  # e.g. "A" -> Port.A, "S1" -> Port.S1
 
 # Example device class name mapping
 DEVICE_CLASS_MAP = {
@@ -37,7 +37,7 @@ def class2str(device_class_name: str) -> str:
     for key, val in DEVICE_CLASS_MAP.items():
         if val == device_class_name:
             return key
-    raise ValueError(f"No known device string for class {device_class_name}")
+    raise ValueError("No known device string for class {}".format(device_class_name))
 
 def str2class(device_str: str) -> str:
     """
@@ -46,4 +46,4 @@ def str2class(device_str: str) -> str:
     if device_str in DEVICE_CLASS_MAP:
         return DEVICE_CLASS_MAP[device_str]
     else:
-        raise ValueError(f"No known device class for string {device_str}")
+        raise ValueError("No known device class for string {}".format(device_str))

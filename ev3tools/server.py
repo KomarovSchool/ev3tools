@@ -7,7 +7,9 @@ from pybricks.parameters import Port
 from pybricks.ev3devices import (Motor, UltrasonicSensor, GyroSensor, ColorSensor)
 # etc., import any other Pybricks classes you need
 
-from my_ev3_package.common import str2port, str2class
+from .common import str2port, str2class
+
+
 
 class EV3RPCServer:
     def __init__(self, host='0.0.0.0', port=12345):
@@ -20,12 +22,13 @@ class EV3RPCServer:
         Start the server, accept connections, handle requests (blocking).
         """
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind((self._host, self._port))
+        addr = socket.getaddrinfo(self._host, self._port)[0][-1]
+        s.bind(addr)
         s.listen(1)
-        print(f"Listening on {self._host}:{self._port}...")
+        print("Listening on {}:{}...".format(self._host, self._port))
         while True:
             client_socket, addr = s.accept()
-            print(f"Client connected from {addr}")
+            print("Client connected from {}".format(addr))
             # If you want to handle multiple clients, spawn a thread
             # For now, we will just handle one client at a time
             self.handle_client(client_socket)
@@ -41,16 +44,17 @@ class EV3RPCServer:
                 line = self._recv_line(client_socket)
                 if not line:
                     break
+                print(line)
                 request = json.loads(line)
                 response = self._handle_request(request)
                 # Send response back
-                client_socket.sendall(json.dumps(response).encode('utf-8') + b"\n")
+                client_socket.write(json.dumps(response).encode('utf-8') + b"\n")
             except OSError:
                 break
             except Exception as e:
                 # If something else fails, send an error response
                 err_msg = {"error": str(e)}
-                client_socket.sendall(json.dumps(err_msg).encode('utf-8') + b"\n")
+                client_socket.write(json.dumps(err_msg).encode('utf-8') + b"\n")
 
     def _handle_request(self, request):
         """
@@ -62,7 +66,7 @@ class EV3RPCServer:
         elif req_type == "call":
             return self._handle_call(request)
         else:
-            return {"error": f"Unknown request type {req_type}"}
+            return {"error": "Unknown request type {}".format(req_type)}
 
     def _handle_init(self, request):
         port_str = request["port"]
@@ -82,7 +86,7 @@ class EV3RPCServer:
         elif class_name == "ColorSensor":
             self._devices[port_str] = ColorSensor(port)
         else:
-            return {"error": f"Unknown device {device_str}"}
+            return {"error": "Unknown device {}".format(device_str)}
 
         return {"result": None}
 
@@ -95,11 +99,11 @@ class EV3RPCServer:
         # Fetch device
         device = self._devices.get(port_str)
         if not device:
-            return {"error": f"No device initialized on port {port_str}"}
+            return {"error": "No device initialized on port {}".format(port_str)}
 
         # Call method
         if not hasattr(device, method_name):
-            return {"error": f"Device on port {port_str} has no method {method_name}"}
+            return {"error": "Device on port {} has no method {}".format(port_str, method_name)}
 
         method = getattr(device, method_name)
         result = method(*args, **kwargs)
@@ -119,3 +123,4 @@ class EV3RPCServer:
             if b"\n" in buf:
                 break
         return buf.strip().decode('utf-8')
+

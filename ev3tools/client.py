@@ -2,9 +2,9 @@
 
 import socket
 import json
-from my_ev3_package.common import port2str, class2str, str2port
-from my_ev3_package.devices.motor import RemoteMotor
-from my_ev3_package.devices.sensor import (
+from .common import port2str, class2str, str2port
+from .devices.motor import RemoteMotor
+from .devices.sensor import (
     RemoteUltrasonicSensor,
     RemoteGyroSensor,
     RemoteColorSensor,
@@ -21,31 +21,31 @@ class RemoteHub:
         # For simplicity, let’s keep it open once connected
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._sock.connect((self.ip, self.port))
+        if hasattr(self._sock, "write"):
+            self.write = self._sock.write
+        else:
+            self.write = self._sock.send
 
-    def motor(self, pybricks_port):
+    def motor(self, port_str):
         """
         Initialize a remote motor on a port (Port.A, Port.B, etc.).
         This sends an 'init' command to the server.
         """
-        port_str = port2str(pybricks_port)
         device_str = class2str("Motor")
         self._init_device(port_str, device_str)
         return RemoteMotor(self, port_str)
 
-    def ultrasonic(self, pybricks_port):
-        port_str = port2str(pybricks_port)
+    def ultrasonic(self, port_str):
         device_str = class2str("UltrasonicSensor")
         self._init_device(port_str, device_str)
         return RemoteUltrasonicSensor(self, port_str)
 
-    def gyro(self, pybricks_port):
-        port_str = port2str(pybricks_port)
+    def gyro(self, port_str):
         device_str = class2str("GyroSensor")
         self._init_device(port_str, device_str)
         return RemoteGyroSensor(self, port_str)
 
-    def color(self, pybricks_port):
-        port_str = port2str(pybricks_port)
+    def color(self, port_str):
         device_str = class2str("ColorSensor")
         self._init_device(port_str, device_str)
         return RemoteColorSensor(self, port_str)
@@ -82,8 +82,10 @@ class RemoteHub:
         """
         data = json.dumps(request_dict).encode('utf-8')
         # You might want a length-prefix or something more robust in real code
-        self._sock.sendall(data + b"\n")  # Send a newline as delimiter
+        self.write(data)  # Send a newline as delimiter
+        self.write(b"\n")
         # Now receive response
+        print(data)
         response_data = self._recv_line()
         return json.loads(response_data)
 
